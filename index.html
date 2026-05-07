@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>うちのこ前世診断</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700;900&family=Zen+Old+Mincho:wght@400;700;900&display=swap');
+
+:root {
+–ink: #1a0a00;
+–paper: #f5ede0;
+–gold: #c9a84c;
+–red: #c0392b;
+–muted: #8b7355;
+–pale: #faf4ea;
+}
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+font-family: ‘Noto Serif JP’, serif;
+background: var(–paper);
+color: var(–ink);
+min-height: 100vh;
+overflow-x: hidden;
+position: relative;
+}
+
+/* 和紙テクスチャ背景 */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘300’ height=‘300’%3E%3Cfilter id=‘n’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3CfeColorMatrix type=‘saturate’ values=‘0’/%3E%3C/filter%3E%3Crect width=‘300’ height=‘300’ filter=‘url(%23n)’ opacity=‘0.06’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 0;
+}
+
+/* 流れる雲の装飾 */
+.clouds {
+position: fixed;
+top: 0; left: 0;
+width: 100%; height: 100%;
+pointer-events: none;
+z-index: 0;
+overflow: hidden;
+opacity: 0.07;
+}
+.cloud {
+position: absolute;
+border-radius: 50%;
+background: var(–gold);
+filter: blur(40px);
+animation: drift linear infinite;
+}
+.cloud:nth-child(1) { width: 300px; height: 200px; top: 10%; animation-duration: 30s; animation-delay: 0s; }
+.cloud:nth-child(2) { width: 200px; height: 150px; top: 60%; animation-duration: 45s; animation-delay: -15s; }
+.cloud:nth-child(3) { width: 400px; height: 250px; top: 30%; animation-duration: 60s; animation-delay: -30s; }
+
+@keyframes drift {
+from { transform: translateX(-400px); }
+to { transform: translateX(calc(100vw + 400px)); }
+}
+
+/* 画面管理 */
+.screen {
+display: none;
+position: relative;
+z-index: 1;
+min-height: 100vh;
+}
+.screen.active { display: flex; }
+
+/* ===== TOP画面 ===== */
+#screen-top {
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 40px 24px;
+text-align: center;
+}
+
+.mon {
+font-size: 64px;
+line-height: 1;
+margin-bottom: 8px;
+animation: floatY 4s ease-in-out infinite;
+}
+@keyframes floatY {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-12px); }
+}
+
+.top-title {
+font-family: ‘Zen Old Mincho’, serif;
+font-size: clamp(28px, 7vw, 42px);
+font-weight: 900;
+letter-spacing: 0.15em;
+color: var(–ink);
+line-height: 1.3;
+margin-bottom: 6px;
+}
+
+.top-subtitle {
+font-size: 13px;
+color: var(–muted);
+letter-spacing: 0.3em;
+margin-bottom: 40px;
+}
+
+.divider-gold {
+width: 80px;
+height: 2px;
+background: linear-gradient(90deg, transparent, var(–gold), transparent);
+margin: 20px auto;
+}
+
+.top-desc {
+font-size: 14px;
+color: var(–muted);
+line-height: 2;
+max-width: 320px;
+margin-bottom: 40px;
+}
+
+.btn-main {
+background: var(–ink);
+color: var(–paper);
+border: none;
+font-family: ‘Noto Serif JP’, serif;
+font-size: 16px;
+letter-spacing: 0.25em;
+padding: 18px 48px;
+cursor: pointer;
+position: relative;
+transition: all 0.3s;
+clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.btn-main::before {
+content: ‘’;
+position: absolute;
+inset: -2px;
+background: var(–gold);
+z-index: -1;
+clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+opacity: 0;
+transition: opacity 0.3s;
+}
+.btn-main:hover { transform: translateY(-2px); background: #2d1a00; }
+.btn-main:hover::before { opacity: 1; }
+
+.seal {
+margin-top: 48px;
+font-size: 11px;
+color: var(–muted);
+letter-spacing: 0.2em;
+opacity: 0.6;
+}
+
+/* ===== 写真アップロード画面 ===== */
+#screen-camera {
+flex-direction: column;
+align-items: center;
+justify-content: center;
+background: #0d0703;
+color: white;
+padding: 40px 24px;
+min-height: 100vh;
+}
+
+.camera-header {
+text-align: center;
+width: 100%;
+margin-bottom: 40px;
+}
+.camera-header h2 {
+font-family: ‘Zen Old Mincho’, serif;
+font-size: 22px;
+letter-spacing: 0.3em;
+color: var(–gold);
+margin-bottom: 8px;
+}
+.camera-header p {
+font-size: 13px;
+color: rgba(255,255,255,0.5);
+letter-spacing: 0.15em;
+line-height: 1.9;
+}
+
+.upload-area {
+width: 100%;
+max-width: 340px;
+border: 2px dashed rgba(201,168,76,0.5);
+border-radius: 8px;
+padding: 48px 24px;
+text-align: center;
+cursor: pointer;
+transition: all 0.3s;
+margin-bottom: 32px;
+position: relative;
+}
+.upload-area:hover { border-color: var(–gold); background: rgba(201,168,76,0.05); }
+.upload-area input[type=file] {
+position: absolute;
+inset: 0;
+opacity: 0;
+cursor: pointer;
+width: 100%;
+height: 100%;
+}
+.upload-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+.upload-area-text {
+font-size: 16px;
+color: var(–gold);
+letter-spacing: 0.2em;
+margin-bottom: 8px;
+font-family: ‘Zen Old Mincho’, serif;
+}
+.upload-area-sub {
+font-size: 12px;
+color: rgba(255,255,255,0.35);
+letter-spacing: 0.1em;
+}
+
+.preview-wrap {
+width: 200px;
+height: 200px;
+border-radius: 50%;
+overflow: hidden;
+border: 3px solid var(–gold);
+margin: 0 auto 32px;
+display: none;
+}
+.preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+.btn-back {
+background: transparent;
+border: 1px solid rgba(255,255,255,0.2);
+color: rgba(255,255,255,0.4);
+font-family: ‘Noto Serif JP’, serif;
+font-size: 13px;
+padding: 12px 24px;
+cursor: pointer;
+letter-spacing: 0.2em;
+transition: all 0.2s;
+display: block;
+margin: 0 auto;
+}
+.btn-back:hover { border-color: rgba(255,255,255,0.5); color: white; }
+
+.btn-diagnose {
+display: none;
+background: var(–gold);
+border: none;
+color: var(–ink);
+font-family: ‘Zen Old Mincho’, serif;
+font-size: 17px;
+letter-spacing: 0.25em;
+padding: 18px 48px;
+cursor: pointer;
+font-weight: 700;
+transition: all 0.2s;
+margin: 0 auto 20px;
+}
+.btn-diagnose:hover { background: #e8c96a; }
+#file-input-main { display: none; }
+
+/* ===== ローディング画面 ===== */
+#screen-loading {
+flex-direction: column;
+align-items: center;
+justify-content: center;
+background: #0d0703;
+color: white;
+padding: 40px 24px;
+}
+
+.loading-photo {
+width: 140px;
+height: 140px;
+border-radius: 50%;
+overflow: hidden;
+border: 3px solid var(–gold);
+margin-bottom: 40px;
+position: relative;
+animation: pulse-gold 2s ease-in-out infinite;
+}
+@keyframes pulse-gold {
+0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+50% { box-shadow: 0 0 0 20px rgba(201,168,76,0); }
+}
+.loading-photo img {
+width: 100%; height: 100%;
+object-fit: cover;
+}
+
+.loading-title {
+font-family: ‘Zen Old Mincho’, serif;
+font-size: 20px;
+letter-spacing: 0.3em;
+color: var(–gold);
+margin-bottom: 32px;
+}
+
+.loading-steps {
+list-style: none;
+width: 100%;
+max-width: 320px;
+}
+.loading-step {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 10px 0;
+border-bottom: 1px solid rgba(255,255,255,0.07);
+font-size: 13px;
+color: rgba(255,255,255,0.3);
+letter-spacing: 0.1em;
+transition: all 0.5s;
+}
+.loading-step.done { color: rgba(255,255,255,0.9); }
+.loading-step.active { color: var(–gold); }
+.step-dot {
+width: 8px; height: 8px;
+border-radius: 50%;
+background: rgba(255,255,255,0.2);
+flex-shrink: 0;
+transition: all 0.5s;
+}
+.loading-step.done .step-dot { background: var(–gold); }
+.loading-step.active .step-dot { background: var(–gold); animation: blink 0.6s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.loading-years {
+margin-top: 32px;
+font-size: 12px;
+color: rgba(255,255,255,0.3);
+letter-spacing: 0.2em;
+}
+.loading-years span {
+color: var(–gold);
+font-size: 22px;
+font-family: ‘Zen Old Mincho’, serif;
+display: block;
+text-align: center;
+margin-top: 4px;
+}
+
+/* ===== 結果画面 ===== */
+#screen-result {
+flex-direction: column;
+align-items: center;
+padding: 0 0 60px;
+}
+
+.result-header {
+width: 100%;
+background: var(–ink);
+color: var(–paper);
+text-align: center;
+padding: 32px 24px 28px;
+position: relative;
+overflow: hidden;
+}
+.result-header::after {
+content: ‘’;
+position: absolute;
+bottom: 0; left: 0; right: 0;
+height: 3px;
+background: linear-gradient(90deg, transparent, var(–gold), transparent);
+}
+
+.result-badge {
+font-size: 11px;
+letter-spacing: 0.4em;
+color: var(–gold);
+margin-bottom: 8px;
+}
+
+.result-photo-circle {
+width: 100px;
+height: 100px;
+border-radius: 50%;
+overflow: hidden;
+border: 2px solid var(–gold);
+margin: 16px auto;
+}
+.result-photo-circle img {
+width: 100%; height: 100%;
+object-fit: cover;
+}
+
+.result-title-label {
+font-size: 12px;
+letter-spacing: 0.3em;
+color: rgba(255,255,255,0.4);
+margin-bottom: 8px;
+}
+
+.result-zense-name {
+font-family: ‘Zen Old Mincho’, serif;
+font-size: clamp(22px, 6vw, 32px);
+font-weight: 900;
+letter-spacing: 0.1em;
+color: var(–gold);
+line-height: 1.3;
+animation: revealName 1s ease-out forwards;
+}
+@keyframes revealName {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.result-era {
+font-size: 13px;
+color: rgba(255,255,255,0.5);
+margin-top: 6px;
+letter-spacing: 0.2em;
+}
+
+/* スコアセクション */
+.scores-section {
+width: 100%;
+max-width: 400px;
+padding: 28px 24px;
+background: white;
+margin: 0 auto;
+}
+
+.scores-title {
+font-size: 11px;
+letter-spacing: 0.4em;
+color: var(–muted);
+text-align: center;
+margin-bottom: 20px;
+}
+
+.score-item {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 14px;
+}
+.score-label {
+font-size: 12px;
+color: var(–muted);
+letter-spacing: 0.1em;
+width: 80px;
+flex-shrink: 0;
+}
+.score-bar-track {
+flex: 1;
+height: 6px;
+background: #e8ddd0;
+border-radius: 3px;
+overflow: hidden;
+}
+.score-bar-fill {
+height: 100%;
+border-radius: 3px;
+background: linear-gradient(90deg, var(–gold), #e8c96a);
+width: 0;
+transition: width 1.5s ease-out;
+}
+.score-value {
+font-size: 13px;
+font-weight: 700;
+color: var(–ink);
+width: 40px;
+text-align: right;
+flex-shrink: 0;
+}
+
+/* 説明文 */
+.description-section {
+width: 100%;
+max-width: 400px;
+padding: 28px 24px;
+margin: 0 auto;
+}
+
+.desc-label {
+font-size: 11px;
+letter-spacing: 0.4em;
+color: var(–muted);
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.desc-label::before,
+.desc-label::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–gold);
+opacity: 0.4;
+}
+
+.desc-text {
+font-size: 15px;
+line-height: 2.2;
+color: var(–ink);
+letter-spacing: 0.05em;
+}
+
+.desc-punch {
+margin-top: 16px;
+padding: 14px 18px;
+background: var(–ink);
+color: var(–gold);
+font-family: ‘Zen Old Mincho’, serif;
+font-size: 15px;
+letter-spacing: 0.1em;
+line-height: 1.8;
+position: relative;
+}
+.desc-punch::before {
+content: ‘…’;
+display: block;
+font-size: 20px;
+color: rgba(255,255,255,0.3);
+margin-bottom: 6px;
+}
+
+/* シェア・もう一回 */
+.result-actions {
+display: flex;
+flex-direction: column;
+gap: 12px;
+width: 100%;
+max-width: 400px;
+padding: 0 24px;
+margin-top: 8px;
+}
+
+.screenshot-box {
+background: linear-gradient(135deg, #1a0a00, #2d1500);
+border: 1px solid var(–gold);
+padding: 20px;
+text-align: center;
+position: relative;
+overflow: hidden;
+}
+.screenshot-box::before {
+content: ‘✨’;
+position: absolute;
+top: -10px; right: -10px;
+font-size: 40px;
+opacity: 0.15;
+}
+.screenshot-title {
+color: var(–gold);
+font-family: ‘Zen Old Mincho’, serif;
+font-size: 15px;
+letter-spacing: 0.2em;
+margin-bottom: 10px;
+}
+.screenshot-steps {
+color: rgba(255,255,255,0.75);
+font-size: 13px;
+line-height: 2;
+letter-spacing: 0.05em;
+margin-bottom: 14px;
+}
+.screenshot-steps strong {
+color: var(–gold);
+font-size: 14px;
+}
+.coupon-badge {
+display: inline-block;
+background: var(–gold);
+color: var(–ink);
+font-family: ‘Zen Old Mincho’, serif;
+font-size: 16px;
+font-weight: 700;
+padding: 8px 20px;
+letter-spacing: 0.1em;
+}
+.coupon-note {
+margin-top: 8px;
+font-size: 11px;
+color: rgba(255,255,255,0.35);
+letter-spacing: 0.1em;
+}
+
+.btn-retry {
+background: transparent;
+border: 2px solid var(–ink);
+color: var(–ink);
+font-family: ‘Noto Serif JP’, serif;
+font-size: 15px;
+letter-spacing: 0.25em;
+padding: 16px;
+cursor: pointer;
+transition: all 0.2s;
+}
+.btn-retry:hover { background: var(–ink); color: var(–paper); }
+
+/* フラッシュエフェクト */
+.flash {
+position: fixed;
+inset: 0;
+background: white;
+z-index: 9999;
+pointer-events: none;
+opacity: 0;
+}
+.flash.go {
+animation: flashAnim 0.4s ease-out forwards;
+}
+@keyframes flashAnim {
+0% { opacity: 1; }
+100% { opacity: 0; }
+}
+
+/* ランク表示 */
+.rank-badge {
+display: inline-block;
+padding: 3px 12px;
+font-size: 13px;
+font-weight: 700;
+letter-spacing: 0.2em;
+margin-left: 8px;
+}
+.rank-SSS { background: linear-gradient(90deg,#a78bfa,#60a5fa,#34d399,#fbbf24,#f87171); background-size:200%; color:white; animation:rainbow 2s linear infinite; }
+@keyframes rainbow{0%{background-position:0%}100%{background-position:200%}}
+.rank-SS { background: linear-gradient(90deg,#fbbf24,#f59e0b); color: var(–ink); }
+.rank-S { background: var(–gold); color: var(–ink); }
+.rank-A { background: #c0392b; color: white; }
+.rank-B { background: #2980b9; color: white; }
+.rank-C { background: #7f8c8d; color: white; }
+.rank-D { background: #bdc3c7; color: var(–ink); }
+.sss-overlay{display:none;position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
+.sss-overlay.show{display:block;}
+.star-particle{position:absolute;font-size:18px;animation:starFall linear forwards;opacity:0;}
+@keyframes starFall{0%{opacity:1;transform:translateY(-20px) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(720deg);}}
+</style>
+
+</head>
+<body>
+
+<div class="clouds">
+  <div class="cloud"></div>
+  <div class="cloud"></div>
+  <div class="cloud"></div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<!-- ===== TOP画面 ===== -->
+
+<div class="screen active" id="screen-top">
+  <div class="mon">🐾</div>
+  <div class="top-title">うちのこ<br>前世診断</div>
+  <div class="top-subtitle">― 魂の記憶を解読する ―</div>
+  <div class="divider-gold"></div>
+  <p class="top-desc">
+    写真を一枚選ぶだけで、<br>
+    あなたの愛するこの魂が<br>
+    かつて何者であったかを<br>
+    深淵なる技術で解明します。
+  </p>
+  <button class="btn-main" onclick="goToCamera()">診断をはじめる</button>
+  <p class="seal">※診断結果は魂の波動に基づくものであり、科学的根拠はございません</p>
+</div>
+
+<!-- ===== 写真アップロード画面 ===== -->
+
+<div class="screen" id="screen-camera">
+  <div class="camera-header">
+    <h2>写真を選んでください</h2>
+    <p>うちのこの写真を1枚<br>アップロードしてください</p>
+  </div>
+
+  <div class="preview-wrap" id="preview-wrap">
+    <img id="preview-img" src="" alt="">
+  </div>
+
+  <div class="upload-area" id="upload-area">
+    <input type="file" accept="image/*" onchange="uploadPhoto(event)">
+    <span class="upload-icon">🐾</span>
+    <div class="upload-area-text">タップして写真を選ぶ</div>
+    <div class="upload-area-sub">アルバムから選べます</div>
+  </div>
+
+<button class="btn-diagnose" id="btn-diagnose" onclick="startLoading()">前世を調べる ✨</button>
+<button class="btn-back" onclick="goToTop()">TOPに戻る</button>
+
+</div>
+
+<!-- ===== ローディング画面 ===== -->
+
+<div class="screen" id="screen-loading">
+  <div class="loading-photo">
+    <img id="loading-img" src="" alt="">
+  </div>
+  <div class="loading-title">魂の記憶を解析中</div>
+  <ul class="loading-steps">
+    <li class="loading-step" id="step-1"><span class="step-dot"></span>オーラの波動を測定中…</li>
+    <li class="loading-step" id="step-2"><span class="step-dot"></span>前世データベースと照合中…</li>
+    <li class="loading-step" id="step-3"><span class="step-dot"></span>過去<span id="years-count">0</span>年分の記録を検索中…</li>
+    <li class="loading-step" id="step-4"><span class="step-dot"></span>魂の因果関係を解析中…</li>
+    <li class="loading-step" id="step-5"><span class="step-dot"></span>前世を特定しました</li>
+  </ul>
+</div>
+
+<!-- ===== 結果画面 ===== -->
+
+<div class="screen" id="screen-result">
+  <div class="result-header">
+    <div class="result-badge">— 前世診断結果 —</div>
+    <div class="result-photo-circle">
+      <img id="result-img" src="" alt="">
+    </div>
+    <div class="result-title-label">この魂の前世は</div>
+    <div class="result-zense-name" id="result-name">—</div>
+    <div class="result-era" id="result-era">—</div>
+  </div>
+
+  <div class="scores-section">
+    <div class="scores-title">— 前世スコア —</div>
+    <div class="score-item">
+      <div class="score-label">魂年齢</div>
+      <div class="score-bar-track"><div class="score-bar-fill" id="bar-age"></div></div>
+      <div class="score-value" id="val-age">—</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">品格ランク</div>
+      <div class="score-bar-track"><div class="score-bar-fill" id="bar-rank"></div></div>
+      <div class="score-value" id="val-rank">—</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">前世充実度</div>
+      <div class="score-bar-track"><div class="score-bar-fill" id="bar-life"></div></div>
+      <div class="score-value" id="val-life">—</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">転生回数</div>
+      <div class="score-bar-track"><div class="score-bar-fill" id="bar-reincarnation"></div></div>
+      <div class="score-value" id="val-reincarnation">—</div>
+    </div>
+  </div>
+
+  <div class="description-section">
+    <div class="desc-label">前世の記憶</div>
+    <p class="desc-text" id="result-desc">—</p>
+    <div class="desc-punch" id="result-punch">—</div>
+  </div>
+
+  <div class="result-actions">
+    <div class="screenshot-box">
+      <div class="screenshot-title">📸 結果をシェアしよう！</div>
+      <div class="screenshot-steps">
+        スクリーンショットを撮って<br>
+        <strong>#NOiRE</strong> をつけて<br>
+        InstagramかThreadsに投稿してね🐾
+      </div>
+      <div style="margin: 12px 0; padding: 12px; background: rgba(255,255,255,0.05); border-left: 2px solid var(--gold);">
+        <div style="font-size:11px; color: rgba(255,255,255,0.45); letter-spacing:0.15em; margin-bottom:6px;">— アカウントはこちら —</div>
+        <div style="font-family:'Zen Old Mincho',serif; color:var(--gold); font-size:16px; letter-spacing:0.1em;">@noire_0114</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.5); margin-top:4px; letter-spacing:0.05em;">うちのこのオーダーイラストを<br>承っております🐾</div>
+      </div>
+      <div class="coupon-badge">うちのこイラスト 500円引き！</div>
+      <div class="coupon-note">※DMにてスクショをお送りください</div>
+      <div style="margin-top: 14px; padding: 10px 14px; background: rgba(201,168,76,0.12); border: 1px dashed rgba(201,168,76,0.5); font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.8; letter-spacing: 0.05em;">
+        🎁 タグ付け＋スクショ投稿してくれた方の中から<br>
+        <strong style="color:var(--gold);">ランダムでイラストを無料で</strong><br>
+        描いちゃうかも？！
+      </div>
+    </div>
+    <button class="btn-retry" onclick="goToCamera()">もう一度診断する</button>
+    <button class="btn-retry" onclick="goToTop()" style="border-color: var(--muted); color: var(--muted);">TOPに戻る</button>
+  </div>
+</div>
+
+<div class="sss-overlay" id="sss-overlay"></div>
+
+<script>
+// ===== 前世データ 100種類 =====
+const ZENSE_DATA = [
+  // ===== 既存30種 =====
+  {
+    name: "平安貴族の三男坊",
+    era: "平安時代 ・ 西暦900年頃",
+    age: 9200, ageBar: 92,
+    rankLabel: "B", rankBar: 60,
+    lifeScore: "38%", lifeBar: 38,
+    reincarnation: 47, reincarnationBar: 78,
+    desc: "京の都で雅な生活を送っておりました。和歌を詠み、管弦を奏で、恋文を書くことを生業としておりました。身分は申し分なく、牛車も持っておりました。",
+    punch: "ただし、和歌の出来が壊滅的に悪く、送った恋文はすべて未読のまま捨てられておりました。"
+  },
+  {
+    name: "田舎の大地主",
+    era: "江戸時代中期 ・ 西暦1750年頃",
+    age: 6400, ageBar: 64,
+    rankLabel: "A", rankBar: 78,
+    lifeScore: "71%", lifeBar: 71,
+    reincarnation: 23, reincarnationBar: 38,
+    desc: "豊かな田畑を持ち、小作人に慕われた器量人でありました。毎年の収穫を喜び、村人たちと宴を催す太っ腹な方でございました。",
+    punch: "ただし、自分の田んぼと隣の田んぼの区別がつかず、毎年秋に境界線で揉めておりました。"
+  },
+  {
+    name: "エジプト神殿の神官",
+    era: "古代エジプト ・ 紀元前1350年頃",
+    age: 33500, ageBar: 99,
+    rankLabel: "S", rankBar: 95,
+    lifeScore: "55%", lifeBar: 55,
+    reincarnation: 61, reincarnationBar: 95,
+    desc: "ナイルの恵みを受け、神聖なる儀式を司る崇高な存在でありました。ファラオにも謁見を許された、誠に格式ある御方でございます。",
+    punch: "担当業務は神殿の掃き掃除でした。30年間、毎朝。"
+  },
+  {
+    name: "江戸の両替商",
+    era: "江戸時代 ・ 西暦1800年頃",
+    age: 5800, ageBar: 58,
+    rankLabel: "A", rankBar: 80,
+    lifeScore: "82%", lifeBar: 82,
+    reincarnation: 18, reincarnationBar: 30,
+    desc: "日本橋に構えた老舗両替屋の主として、商人や武士から厚い信頼を寄せられておりました。金の扱いには人一倍長けておりました。",
+    punch: "昼寝への情熱も人一倍で、帳簿をつけながら寝落ちする技術は江戸一番と称されておりました。"
+  },
+  {
+    name: "バイキングの族長",
+    era: "ヴァイキング時代 ・ 西暦980年頃",
+    age: 10200, ageBar: 85,
+    rankLabel: "S", rankBar: 90,
+    lifeScore: "44%", lifeBar: 44,
+    reincarnation: 35, reincarnationBar: 58,
+    desc: "北の海を制覇した勇猛果敢な族長として、部下たちから畏れられておりました。その雄叫びは海峡を越えて響き渡ったと伝わります。",
+    punch: "方向音痴が深刻で、イギリスに向かうたびにアイスランドに着いておりました。部下は全員把握済みでした。"
+  },
+  {
+    name: "宮廷に仕える孔雀",
+    era: "ムガル帝国 ・ 西暦1600年頃",
+    age: 4100, ageBar: 41,
+    rankLabel: "S", rankBar: 93,
+    lifeScore: "91%", lifeBar: 91,
+    reincarnation: 52, reincarnationBar: 87,
+    desc: "インドの宮廷に仕える孔雀として、その美しき羽根を皇帝に披露する大切な役割を担っておりました。誰もが振り返る存在でありました。",
+    punch: "自分の美しさに酔いすぎて、池に映る自分の姿を見つめ続けた結果、重要な謁見の場をすっぽかしたことがございます。"
+  },
+  {
+    name: "長屋の下駄職人",
+    era: "江戸時代後期 ・ 西暦1840年頃",
+    age: 5200, ageBar: 52,
+    rankLabel: "C", rankBar: 45,
+    lifeScore: "67%", lifeBar: 67,
+    reincarnation: 29, reincarnationBar: 48,
+    desc: "江戸の下町の長屋で下駄を作り続けた職人でございます。口は悪いが腕は確か、近所の評判はすこぶる良い方でありました。",
+    punch: "ただし本人の口の悪さが致命的で、客への第一声が「またアンタか」でした。それでも繁盛していた謎の店でした。"
+  },
+  {
+    name: "大阪の昆布問屋の主人",
+    era: "江戸時代 ・ 西暦1780年頃",
+    age: 5600, ageBar: 56,
+    rankLabel: "A", rankBar: 75,
+    lifeScore: "88%", lifeBar: 88,
+    reincarnation: 14, reincarnationBar: 23,
+    desc: "上方随一の昆布問屋として財をなされました。北前船で運ばれる昆布の目利きは天下一品、商売の才に恵まれた御方でございます。",
+    punch: "仕事の8割が試食でした。その結果、生涯で食べた昆布の量が船一隻分に達したと記録されております。"
+  },
+  {
+    name: "農家の三男坊",
+    era: "室町時代 ・ 西暦1450年頃",
+    age: 6800, ageBar: 68,
+    rankLabel: "D", rankBar: 25,
+    lifeScore: "52%", lifeBar: 52,
+    reincarnation: 8, reincarnationBar: 13,
+    desc: "山あいの農村で生まれた三男でございます。畑仕事よりも自由な時間を愛し、野山を駆け回ることを生き甲斐としておりました。",
+    punch: "農作業スキルがゼロで、畑に植えた種が何の野菜か毎年収穫まで分からなかったそうです。"
+  },
+  {
+    name: "ローマ皇帝の毒見係",
+    era: "古代ローマ ・ 西暦100年頃",
+    age: 19200, ageBar: 88,
+    rankLabel: "B", rankBar: 55,
+    lifeScore: "29%", lifeBar: 29,
+    reincarnation: 70, reincarnationBar: 99,
+    desc: "偉大なるローマ皇帝の食卓を守る、崇高なる職務を担っておりました。皇帝への忠誠心は並々ならぬものがあったと伝わります。",
+    punch: "毒見で体を壊すことはなかったのですが、食べすぎで体を壊しました。それなりに美食の時代でした。"
+  },
+  {
+    name: "シルクロードのラクダ引き",
+    era: "唐の時代 ・ 西暦750年頃",
+    age: 12300, ageBar: 78,
+    rankLabel: "C", rankBar: 40,
+    lifeScore: "73%", lifeBar: 73,
+    reincarnation: 33, reincarnationBar: 55,
+    desc: "砂漠の道を幾千里も旅した商人でございます。ラクダとともに東西を行き来し、香辛料や絹を運ぶ重要な役を担っておりました。",
+    punch: "ラクダに好かれすぎた結果、どのラクダも離れようとせず、市場での売買がことごとく失敗しました。"
+  },
+  {
+    name: "フランス王室のパン職人",
+    era: "フランス ・ 西暦1780年頃",
+    age: 5800, ageBar: 58,
+    rankLabel: "A", rankBar: 82,
+    lifeScore: "61%", lifeBar: 61,
+    reincarnation: 21, reincarnationBar: 35,
+    desc: "ヴェルサイユ宮殿の厨房にてパンを焼き続けた御方でございます。王侯貴族の食卓を飾る名誉ある仕事でありました。",
+    punch: "マリー・アントワネットに「このパン硬い」と毎朝言われ続け、最終的にパン自体を憎むようになっておりました。"
+  },
+  {
+    name: "古代ギリシャの哲学者の弟子",
+    era: "古代ギリシャ ・ 紀元前430年頃",
+    age: 24500, ageBar: 94,
+    rankLabel: "B", rankBar: 65,
+    lifeScore: "48%", lifeBar: 48,
+    reincarnation: 44, reincarnationBar: 73,
+    desc: "知恵を愛し真理を追い求めた哲学者の門下生でございます。アゴラにて議論を重ね、知識を深めた崇高な方でありました。",
+    punch: "ただし、師匠の話を聞くだけで一言も発言せずに生涯を終えました。今世のうちのこに似ております。"
+  },
+  {
+    name: "お城の石垣の石",
+    era: "戦国時代 ・ 西暦1575年頃",
+    age: 2100000, ageBar: 100,
+    rankLabel: "D", rankBar: 10,
+    lifeScore: "12%", lifeBar: 12,
+    reincarnation: 3, reincarnationBar: 5,
+    desc: "名城の石垣として数百年にわたり城を支え続けた、縁の下の力持ちでございます。その存在なくして城は成り立ちませんでした。",
+    punch: "400年間、一度も動かなかったことが唯一の実績です。その後、城の改修でごっそり取り替えられました。"
+  },
+  {
+    name: "インカ帝国の日時計番",
+    era: "インカ帝国 ・ 西暦1450年頃",
+    age: 15800, ageBar: 80,
+    rankLabel: "C", rankBar: 48,
+    lifeScore: "35%", lifeBar: 35,
+    reincarnation: 27, reincarnationBar: 45,
+    desc: "太陽の動きを読み、農耕の時期を民に知らせる重要な役職でございました。帝国の農業を陰で支えた功労者でありました。",
+    punch: "曇りの日は完全に仕事にならないため、生涯の3分の1は有給休暇状態でした。羨ましい話です。"
+  },
+  {
+    name: "チンギスハンの馬係",
+    era: "モンゴル帝国 ・ 西暦1220年頃",
+    age: 8700, ageBar: 72,
+    rankLabel: "B", rankBar: 58,
+    lifeScore: "40%", lifeBar: 40,
+    reincarnation: 38, reincarnationBar: 63,
+    desc: "世界最大の帝国を率いたチンギスハンのお馬の世話をする、誇り高き職務でございました。馬とともに大草原を駆け抜けた御方です。",
+    punch: "馬に蹴られた回数の記録保持者として帝国史に名を残しておりますが、本人の望んだ名誉ではございませんでした。"
+  },
+  {
+    name: "明治の実業家",
+    era: "明治時代 ・ 西暦1890年頃",
+    age: 4300, ageBar: 43,
+    rankLabel: "A", rankBar: 85,
+    lifeScore: "78%", lifeBar: 78,
+    reincarnation: 11, reincarnationBar: 18,
+    desc: "文明開化の波に乗り、西洋の知恵と日本の心を合わせた事業で財をなした御方でございます。人力車を乗り回す洒落者でもありました。",
+    punch: "洋服と和服を半々に着るのが流行の最先端と信じ、上半身が洋服・下半身が着物という独自スタイルを貫きました。"
+  },
+  {
+    name: "宿場町の団子屋",
+    era: "江戸時代 ・ 西暦1820年頃",
+    age: 5000, ageBar: 50,
+    rankLabel: "C", rankBar: 42,
+    lifeScore: "85%", lifeBar: 85,
+    reincarnation: 16, reincarnationBar: 27,
+    desc: "東海道の宿場町で旅人に団子をふるまい、多くの方に愛された名店の主でございました。笑顔が絶えない穏やかな御方でした。",
+    punch: "試食を欠かさなかった結果、1日の在庫の40%が試食として消費されており、帳簿が毎月合わなかったそうです。"
+  },
+  {
+    name: "武家屋敷の庭師",
+    era: "江戸時代 ・ 西暦1760年頃",
+    age: 5500, ageBar: 55,
+    rankLabel: "C", rankBar: 44,
+    lifeScore: "69%", lifeBar: 69,
+    reincarnation: 20, reincarnationBar: 33,
+    desc: "大名屋敷の庭を管理する、誇り高き庭師でございました。松の剪定に人生をかけ、その腕は江戸でも指折りの職人でありました。",
+    punch: "松の剪定以外には一切の興味がなく、依頼されても「うちは松専門」と断り続けた結果、客は松持ちの大名のみとなりました。"
+  },
+  {
+    name: "誰かの草鞋",
+    era: "江戸時代 ・ 西暦1700年頃",
+    age: 300, ageBar: 3,
+    rankLabel: "D", rankBar: 5,
+    lifeScore: "8%", lifeBar: 8,
+    reincarnation: 2, reincarnationBar: 3,
+    desc: "旅人の足を支え、幾千里もの道を共に歩んだ草鞋でございます。その働きなくして旅は成り立たなかったでしょう。",
+    punch: "生涯で踏まれた回数は推定180万回。そして2週間で使い捨てられました。報われない前世ナンバーワンです。"
+  },
+  {
+    name: "南蛮貿易商人",
+    era: "安土桃山時代 ・ 西暦1580年頃",
+    age: 7200, ageBar: 70,
+    rankLabel: "A", rankBar: 77,
+    lifeScore: "66%", lifeBar: 66,
+    reincarnation: 25, reincarnationBar: 42,
+    desc: "ポルトガルやスペインの商人と渡り合い、異国の珍しき品々を日本に持ち込んだ先駆者でございます。国際的なセンスの持ち主でした。",
+    punch: "語学が壊滅的で、商談はすべてジェスチャーで行っておりました。なぜか成立し続けたことが謎として今も語り継がれます。"
+  },
+  {
+    name: "江戸城の廊下",
+    era: "江戸時代 ・ 西暦1700年頃",
+    age: 380, ageBar: 4,
+    rankLabel: "D", rankBar: 8,
+    lifeScore: "15%", lifeBar: 15,
+    reincarnation: 1, reincarnationBar: 2,
+    desc: "徳川将軍家の居城、江戸城の廊下として日本の歴史の中心に存在し続けた御方でございます。国家の重大事を床板として見届けました。",
+    punch: "将軍に踏まれたことが自慢でしたが、将軍本人は一切気にしていませんでした。"
+  },
+  {
+    name: "宴会の徳利",
+    era: "江戸時代 ・ 西暦1750年頃",
+    age: 100, ageBar: 1,
+    rankLabel: "D", rankBar: 15,
+    lifeScore: "22%", lifeBar: 22,
+    reincarnation: 5, reincarnationBar: 8,
+    desc: "江戸の料亭で幾多の宴席を彩った徳利でございます。賑やかな宴の中心に常に置かれた、人気者の存在でありました。",
+    punch: "酒好きの主人に買われたにもかかわらず、主人が禁酒を宣言し、一度も酒を入れてもらえないまま生涯を終えました。"
+  },
+  {
+    name: "漁村の番犬",
+    era: "江戸時代後期 ・ 西暦1850年頃",
+    age: 4600, ageBar: 46,
+    rankLabel: "C", rankBar: 38,
+    lifeScore: "77%", lifeBar: 77,
+    reincarnation: 31, reincarnationBar: 52,
+    desc: "太平洋に面した漁村で、漁師たちの船出を見送り、帰りを待ち続けた番犬でございます。村人から深く愛された御方でありました。",
+    punch: "漁師より早起きで有名でしたが、目的は番をすることではなく「朝一番のご飯をもらうため」だったことが後に判明しました。"
+  },
+  {
+    name: "砂漠のオアシスのカエル",
+    era: "古代オリエント ・ 紀元前2000年頃",
+    age: 40100, ageBar: 99,
+    rankLabel: "C", rankBar: 35,
+    lifeScore: "43%", lifeBar: 43,
+    reincarnation: 58, reincarnationBar: 93,
+    desc: "砂漠の真ん中に奇跡のように存在したオアシスに棲む、神聖な存在として崇められたカエルでございます。",
+    punch: "雨を待ち続けた結果、砂漠で雨が降ったのは生涯で1度きりでした。本人はそれで十分満足していたとのことです。"
+  },
+  {
+    name: "旅芸人の太鼓担当",
+    era: "江戸時代 ・ 西暦1770年頃",
+    age: 5300, ageBar: 53,
+    rankLabel: "C", rankBar: 40,
+    lifeScore: "74%", lifeBar: 74,
+    reincarnation: 22, reincarnationBar: 37,
+    desc: "日本各地を旅して回った旅芸人の一座で、太鼓を担当しておりました。賑やかな舞台を陰で支えた縁の下の力持ちでありました。",
+    punch: "生涯で習得したリズムはひとつだけでした。それだけで50年の旅をやり遂げた、ある意味すごい方でございます。"
+  },
+  {
+    name: "港町の魚屋",
+    era: "江戸時代後期 ・ 西暦1860年頃",
+    age: 4900, ageBar: 49,
+    rankLabel: "B", rankBar: 55,
+    lifeScore: "62%", lifeBar: 62,
+    reincarnation: 17, reincarnationBar: 28,
+    desc: "活気ある港町で新鮮な魚を売り続けた魚屋でございます。その目利きは確かで、常連客から篤い信頼を受けておりました。",
+    punch: "毎朝4時起きを60年続けた結果、寝不足の総計が地球一周分を超えており、生涯の睡眠不足世界記録を更新しました。"
+  },
+  {
+    name: "野原のたんぽぽ",
+    era: "戦国時代 ・ 西暦1560年頃",
+    age: 8500, ageBar: 65,
+    rankLabel: "D", rankBar: 12,
+    lifeScore: "31%", lifeBar: 31,
+    reincarnation: 4, reincarnationBar: 7,
+    desc: "戦乱の時代にもたくましく咲き続けたたんぽぽでございます。踏まれても踏まれても立ち上がる、強靭な精神の持ち主でありました。",
+    punch: "綿毛が飛ぶ季節に、なぜか全部の綿毛が同じ方向に飛んでいきました。風向きと真逆でした。本人は気にしていませんでした。"
+  },
+  {
+    name: "中国宦官の出世頭",
+    era: "明の時代 ・ 西暦1500年頃",
+    age: 14600, ageBar: 82,
+    rankLabel: "A", rankBar: 88,
+    lifeScore: "57%", lifeBar: 57,
+    reincarnation: 42, reincarnationBar: 70,
+    desc: "宮廷で権勢を誇った宦官として、皇帝の絶大なる信頼を獲得された御方でございます。その出世の早さは宮廷史に刻まれております。",
+    punch: "なぜそんなに出世できたのか、本人もよく分かっていなかったそうです。謎は今も解明されておりません。"
+  },
+  {
+    name: "江戸時代の大名",
+    era: "江戸時代初期 ・ 西暦1680年頃",
+    age: 7800, ageBar: 74,
+    rankLabel: "S", rankBar: 97,
+    lifeScore: "70%", lifeBar: 70,
+    reincarnation: 28, reincarnationBar: 47,
+    desc: "徳川の世に三千石の領地を治める大名として、民から慕われた統治者でございます。参勤交代でも颯爽とした行列を誇りました。",
+    punch: "領地の3割を犬の飼育に充てており、家臣から毎年「犬が多すぎる件について」という上申書が提出されておりました。"
+  },
+
+  // ===== 新規追加 70種 =====
+
+  // --- D ランク ---
+  {
+    name: "誰かの枕",
+    era: "江戸時代 ・ 西暦1720年頃",
+    age: 200, ageBar: 2,
+    rankLabel: "D", rankBar: 6,
+    lifeScore: "18%", lifeBar: 18,
+    reincarnation: 2, reincarnationBar: 3,
+    desc: "とある武士のお宅で毎晩頭を支え続けた、縁の下の縁の下の力持ちでございます。安眠に貢献した日々でありました。",
+    punch: "主人のいびきがあまりにもひどく、本人は一度も熟睡できなかったという記録が残っております。"
+  },
+  {
+    name: "お寺の鐘",
+    era: "鎌倉時代 ・ 西暦1250年頃",
+    age: 5500, ageBar: 55,
+    rankLabel: "D", rankBar: 18,
+    lifeScore: "20%", lifeBar: 20,
+    reincarnation: 6, reincarnationBar: 10,
+    desc: "由緒ある古刹で時を告げ続けた梵鐘でございます。朝夕に響き渡るその音色は、里人の心を和ませてまいりました。",
+    punch: "打たれるたびに「ゴーン」と鳴るのが嫌で、できれば「チリン」くらいにしてほしかったとのことです。"
+  },
+  {
+    name: "お城の堀",
+    era: "戦国時代 ・ 西暦1550年頃",
+    age: 1200, ageBar: 12,
+    rankLabel: "D", rankBar: 9,
+    lifeScore: "11%", lifeBar: 11,
+    reincarnation: 1, reincarnationBar: 2,
+    desc: "難攻不落の名城を守る堀として、敵の侵入を幾度となく防いだ縁の下の力持ちでございます。城の存在には欠かせない御方でした。",
+    punch: "カモが毎日泳ぎに来るのが唯一の楽しみで、カモがいない日はひどく落ち込んでいたと伝わります。"
+  },
+  {
+    name: "宿場の看板",
+    era: "江戸時代 ・ 西暦1800年頃",
+    age: 150, ageBar: 2,
+    rankLabel: "D", rankBar: 7,
+    lifeScore: "14%", lifeBar: 14,
+    reincarnation: 2, reincarnationBar: 3,
+    desc: "東海道の宿場町の入口に立ち、旅人を出迎え続けた看板でございます。何千何万という旅人の目に触れた、なかなかの有名人でした。",
+    punch: "雨のたびに文字が滲んで読めなくなるため、書き直された回数は200回を超えております。本人は覚えておりません。"
+  },
+  {
+    name: "誰かの帽子",
+    era: "明治時代 ・ 西暦1895年頃",
+    age: 80, ageBar: 1,
+    rankLabel: "D", rankBar: 11,
+    lifeScore: "25%", lifeBar: 25,
+    reincarnation: 3, reincarnationBar: 5,
+    desc: "文明開化の時代に洒落た紳士に愛用された山高帽でございます。その持ち主はとても帽子を大切にしてくださいました。",
+    punch: "風の強い日に飛ばされ、川に落ちたことが3回あります。そのたびに主人が全力疾走で追いかけてきたのが、唯一の感動シーンでした。"
+  },
+  {
+    name: "田んぼのかかし",
+    era: "江戸時代 ・ 西暦1750年頃",
+    age: 50, ageBar: 1,
+    rankLabel: "D", rankBar: 4,
+    lifeScore: "9%", lifeBar: 9,
+    reincarnation: 1, reincarnationBar: 1,
+    desc: "広大な田んぼを守り、鳥たちの侵入を阻んだ守護者でございます。農家の方に毎年丁寧に作り直してもらいました。",
+    punch: "スズメには全く効果がなく、むしろ止まり木として活用されており、立場が完全に逆転しておりました。"
+  },
+
+  // --- C ランク ---
+  {
+    name: "忍者の見習い",
+    era: "戦国時代 ・ 西暦1570年頃",
+    age: 7800, ageBar: 70,
+    rankLabel: "C", rankBar: 43,
+    lifeScore: "45%", lifeBar: 45,
+    reincarnation: 19, reincarnationBar: 32,
+    desc: "伊賀の里で忍術修行に励んだ見習い忍者でございます。師匠から厳しい訓練を受け、日々己を磨いておりました。",
+    punch: "隠れる訓練中に自分がどこに隠れたか忘れ、3日間見つけてもらえなかったことがあります。師匠は探していませんでした。"
+  },
+  {
+    name: "お茶屋の看板娘の猫",
+    era: "江戸時代 ・ 西暦1800年頃",
+    age: 3200, ageBar: 32,
+    rankLabel: "C", rankBar: 47,
+    lifeScore: "80%", lifeBar: 80,
+    reincarnation: 12, reincarnationBar: 20,
+    desc: "江戸の繁盛するお茶屋に居着いた看板猫として、お客様に大変かわいがられた御方でございます。毎日おやつをもらっておりました。",
+    punch: "かわいがられすぎた結果、体重が通常の2倍になり、縁側から落ちるようになりました。本人はとても幸せそうでした。"
+  },
+  {
+    name: "京都の豆腐屋",
+    era: "江戸時代中期 ・ 西暦1740年頃",
+    age: 5100, ageBar: 51,
+    rankLabel: "C", rankBar: 46,
+    lifeScore: "72%", lifeBar: 72,
+    reincarnation: 15, reincarnationBar: 25,
+    desc: "京の町で毎朝豆腐を作り続けた職人でございます。絹ごし豆腐の滑らかさは都一番と評判で、料亭からも注文が絶えませんでした。",
+    punch: "作りすぎる癖が治らず、毎日大量の豆腐が余りました。近所への配給が日課となり、町内で一番人気の人物になりました。"
+  },
+  {
+    name: "北極のホッキョクギツネ",
+    era: "中世ヨーロッパ ・ 西暦1200年頃",
+    age: 8200, ageBar: 60,
+    rankLabel: "C", rankBar: 36,
+    lifeScore: "58%", lifeBar: 58,
+    reincarnation: 24, reincarnationBar: 40,
+    desc: "白銀の雪原を駆け回ったホッキョクギツネでございます。その真っ白な毛並みは雪景色に溶け込み、神秘的な美しさを誇りました。",
+    punch: "白すぎて雪に溶け込みすぎた結果、仲間に毎回踏まれておりました。気配を消す才能が裏目に出た例でございます。"
+  },
+  {
+    name: "温泉宿の番頭",
+    era: "江戸時代後期 ・ 西暦1840年頃",
+    age: 4700, ageBar: 47,
+    rankLabel: "C", rankBar: 50,
+    lifeScore: "76%", lifeBar: 76,
+    reincarnation: 18, reincarnationBar: 30,
+    desc: "山あいの温泉宿で旅人をもてなした番頭でございます。その気配りの細やかさは宿の評判を高め、遠方からも客が訪れました。",
+    punch: "温泉が好きすぎて、仕事中も頻繁に入っており、1日の入浴回数が最高8回という記録を持っております。"
+  },
+  {
+    name: "宮廷の占い師",
+    era: "平安時代 ・ 西暦1000年頃",
+    age: 9800, ageBar: 80,
+    rankLabel: "C", rankBar: 50,
+    lifeScore: "53%", lifeBar: 53,
+    reincarnation: 36, reincarnationBar: 60,
+    desc: "貴族たちの運命を星と月から読み解いた、宮廷お抱えの占い師でございます。貴族たちから絶大な信頼を寄せられておりました。",
+    punch: "自分の運勢だけは一度も当たらなかったそうです。毎年「今年は良い年になる」と言い続け、毎年裏切られておりました。"
+  },
+  {
+    name: "砂漠の商隊のロバ",
+    era: "古代ペルシャ ・ 紀元前500年頃",
+    age: 25000, ageBar: 90,
+    rankLabel: "C", rankBar: 33,
+    lifeScore: "38%", lifeBar: 38,
+    reincarnation: 45, reincarnationBar: 75,
+    desc: "シルクロードを行き来する商隊で荷物を運び続けたロバでございます。どんな重荷も文句ひとつ言わず運んだ、根性の持ち主でした。",
+    punch: "文句を言わなかったのは言葉が話せなかったからで、心の中では常に文句を言っていたと後の研究で明らかになっております。"
+  },
+  {
+    name: "江戸の瓦版売り",
+    era: "江戸時代 ・ 西暦1810年頃",
+    age: 5000, ageBar: 50,
+    rankLabel: "C", rankBar: 48,
+    lifeScore: "65%", lifeBar: 65,
+    reincarnation: 20, reincarnationBar: 33,
+    desc: "江戸の町を走り回り、最新のニュースを大声で知らせた瓦版売りでございます。その大声は町内全体に響き渡りました。",
+    punch: "大声で売り歩くうちに、だんだん内容を盛るようになり、最終的にほぼフィクションになっておりました。でも売れました。"
+  },
+  {
+    name: "村の橋",
+    era: "室町時代 ・ 西暦1480年頃",
+    age: 3000, ageBar: 30,
+    rankLabel: "C", rankBar: 20,
+    lifeScore: "30%", lifeBar: 30,
+    reincarnation: 5, reincarnationBar: 8,
+    desc: "小川にかかる小さな木の橋として、村人の行き来を長年支えてまいりました。雨の日も風の日も、誰かが渡っておりました。",
+    punch: "渡られるたびに少しずつ腐っていき、最後は村の子どもに踏み抜かれました。その子は泥だらけになりました。"
+  },
+
+  // --- B ランク ---
+  {
+    name: "江戸の戯作者",
+    era: "江戸時代 ・ 西暦1790年頃",
+    age: 5400, ageBar: 54,
+    rankLabel: "B", rankBar: 62,
+    lifeScore: "75%", lifeBar: 75,
+    reincarnation: 22, reincarnationBar: 37,
+    desc: "江戸の人々を笑わせた滑稽本の作家でございます。その作品は瞬く間に評判となり、本屋に行列ができるほどの人気者でした。",
+    punch: "一番の代表作のタイトルを自分でも覚えておらず、書店で自分の本を探すたびに店員に聞かなければなりませんでした。"
+  },
+  {
+    name: "ルネサンス期の彫刻家の助手",
+    era: "イタリア ・ 西暦1490年頃",
+    age: 11500, ageBar: 76,
+    rankLabel: "B", rankBar: 63,
+    lifeScore: "54%", lifeBar: 54,
+    reincarnation: 38, reincarnationBar: 63,
+    desc: "あの有名な彫刻家の工房で大理石を削り続けた助手でございます。歴史に残る名作の制作現場に立ち会った、幸運な御方でした。",
+    punch: "師匠の指示を聞き間違えて鼻を削りすぎたことがあり、その作品は「鼻のない像」として別の意味で有名になりました。"
+  },
+  {
+    name: "幕末の剣客",
+    era: "江戸時代末期 ・ 西暦1860年頃",
+    age: 4800, ageBar: 48,
+    rankLabel: "B", rankBar: 68,
+    lifeScore: "50%", lifeBar: 50,
+    reincarnation: 30, reincarnationBar: 50,
+    desc: "剣の道を極めんと日々修行に励んだ剣客でございます。道場では誰もが認める実力者として、門下生から尊敬されておりました。",
+    punch: "真剣勝負には強いのに試合になると緊張して実力の30%しか出せず、大会では1回戦負けが続きました。"
+  },
+  {
+    name: "アマゾンの部族の長老",
+    era: "大航海時代 ・ 西暦1550年頃",
+    age: 13000, ageBar: 77,
+    rankLabel: "B", rankBar: 66,
+    lifeScore: "84%", lifeBar: 84,
+    reincarnation: 26, reincarnationBar: 43,
+    desc: "豊かなアマゾンの密林で部族を率いた長老でございます。自然の知恵を熟知し、数百年分の言い伝えを記憶しておりました。",
+    punch: "長老の貫禄はあるのに話が長すぎて、部族の会議がいつも3時間を超えていたため、若者からは「また始まった」と思われておりました。"
+  },
+  {
+    name: "ベートーヴェンの隣人",
+    era: "ヨーロッパ ・ 西暦1810年頃",
+    age: 5600, ageBar: 56,
+    rankLabel: "B", rankBar: 60,
+    lifeScore: "33%", lifeBar: 33,
+    reincarnation: 21, reincarnationBar: 35,
+    desc: "音楽の都ウィーンで暮らした市民でございます。歴史に名を刻む大作曲家の近所に住むという幸運に恵まれた御方でありました。",
+    punch: "大作曲家が深夜に大音量で演奏するため、引っ越した回数が生涯で5回に及びました。どこに行っても近所でした。"
+  },
+  {
+    name: "平安時代の女房",
+    era: "平安時代 ・ 西暦980年頃",
+    age: 9500, ageBar: 80,
+    rankLabel: "B", rankBar: 64,
+    lifeScore: "60%", lifeBar: 60,
+    reincarnation: 40, reincarnationBar: 67,
+    desc: "宮中に仕えた女房として、貴族の奥方にお仕えした教養豊かな御方でございます。和歌や物語にも精通しておりました。",
+    punch: "仕えていた奥方が書いた日記があまりにも面白く、こっそり続きを書き足しておりました。どこまでが本物か今でも不明です。"
+  },
+  {
+    name: "南国の浜辺のヤシの木",
+    era: "大航海時代 ・ 西暦1600年頃",
+    age: 2800, ageBar: 28,
+    rankLabel: "B", rankBar: 55,
+    lifeScore: "88%", lifeBar: 88,
+    reincarnation: 7, reincarnationBar: 12,
+    desc: "青い海の前に立つヤシの木として、旅人や船乗りに木陰を提供し続けた御方でございます。南国の風を一身に受けておりました。",
+    punch: "ヤシの実が落ちる角度が絶妙で、通る人の頭に当たる確率が異常に高く、近くを通る人たちに警戒されておりました。"
+  },
+  {
+    name: "薩摩藩の芋農家",
+    era: "江戸時代 ・ 西暦1780年頃",
+    age: 5200, ageBar: 52,
+    rankLabel: "B", rankBar: 58,
+    lifeScore: "79%", lifeBar: 79,
+    reincarnation: 16, reincarnationBar: 27,
+    desc: "薩摩の大地でさつまいもを育て続けた農家でございます。その芋は甘く大きく育ち、藩内でも評判の品でありました。",
+    punch: "芋を食べすぎた結果、生涯においてお腹が穏やかだった日が数えるほどしかなかったと、家族の証言が残っております。"
+  },
+
+  // --- A ランク ---
+  {
+    name: "シェイクスピアの劇団の俳優",
+    era: "イギリス ・ 西暦1600年頃",
+    age: 11800, ageBar: 82,
+    rankLabel: "A", rankBar: 80,
+    lifeScore: "68%", lifeBar: 68,
+    reincarnation: 37, reincarnationBar: 62,
+    desc: "あの有名な劇作家の劇団で役者として活躍された御方でございます。ロンドン中の観客を魅了した舞台人でありました。",
+    punch: "台本を覚えるのが苦手で、毎回アドリブで乗り切っておりました。それがなぜか好評で、作者本人も気づいていませんでした。"
+  },
+  {
+    name: "江戸幕府の勘定奉行",
+    era: "江戸時代 ・ 西暦1730年頃",
+    age: 6200, ageBar: 62,
+    rankLabel: "A", rankBar: 84,
+    lifeScore: "66%", lifeBar: 66,
+    reincarnation: 24, reincarnationBar: 40,
+    desc: "徳川幕府の財政を取り仕切った要職でございます。膨大な帳簿を管理し、幕府の財政を陰で支えた優秀な御方でありました。",
+    punch: "計算は完璧なのに字が汚すぎて、書いた数字の6と0が区別できず、部下が毎回確認に来るのが日課でした。"
+  },
+  {
+    name: "マルコ・ポーロの通訳",
+    era: "元の時代 ・ 西暦1280年頃",
+    age: 19500, ageBar: 88,
+    rankLabel: "A", rankBar: 86,
+    lifeScore: "70%", lifeBar: 70,
+    reincarnation: 43, reincarnationBar: 72,
+    desc: "あの有名な旅行者に同行し、東西の言葉を橋渡しした通訳でございます。様々な文化や言語を操る知性の持ち主でありました。",
+    punch: "通訳しながら少しずつ話を面白く盛る癖があり、マルコ・ポーロの日記が大げさになった原因の一端はこの方にあります。"
+  },
+  {
+    name: "ナポレオンの料理人",
+    era: "フランス ・ 西暦1805年頃",
+    age: 6100, ageBar: 61,
+    rankLabel: "A", rankBar: 83,
+    lifeScore: "63%", lifeBar: 63,
+    reincarnation: 23, reincarnationBar: 38,
+    desc: "フランス皇帝の食事を一手に担った料理長でございます。戦場にも同行し、どんな状況でも最高の料理を提供した猛者でありました。",
+    punch: "ナポレオンが食事中も作戦会議をするため、料理がいつも冷めた状態で出されることに生涯不満を持ち続けておりました。"
+  },
+  {
+    name: "琉球王国の踊り子",
+    era: "琉球王国 ・ 西暦1700年頃",
+    age: 7600, ageBar: 70,
+    rankLabel: "A", rankBar: 78,
+    lifeScore: "85%", lifeBar: 85,
+    reincarnation: 29, reincarnationBar: 48,
+    desc: "美しい琉球の宮廷で舞踊を披露した踊り子でございます。その優雅な舞は王様も絶賛し、国賓を接待する場にも呼ばれました。",
+    punch: "踊りは完璧なのに方向感覚がなく、舞台の左右を必ず間違えておりました。それでも「独自の解釈」として評価されていました。"
+  },
+  {
+    name: "江戸の蘭学者",
+    era: "江戸時代後期 ・ 西暦1820年頃",
+    age: 5100, ageBar: 51,
+    rankLabel: "A", rankBar: 81,
+    lifeScore: "72%", lifeBar: 72,
+    reincarnation: 19, reincarnationBar: 32,
+    desc: "鎖国の時代に西洋の学問を熱心に学んだ先進的な学者でございます。解体新書を読み込み、西洋医学の普及に貢献しました。",
+    punch: "オランダ語の辞書を丸暗記したのに、オランダ人と実際に話したら一言も聞き取れなかったそうです。"
+  },
+  {
+    name: "古代ローマの建築家",
+    era: "古代ローマ ・ 西暦50年頃",
+    age: 21000, ageBar: 90,
+    rankLabel: "A", rankBar: 87,
+    lifeScore: "74%", lifeBar: 74,
+    reincarnation: 46, reincarnationBar: 77,
+    desc: "ローマの壮大な建造物を設計した建築家でございます。その建物は2000年後の今も残っており、後世への偉大な遺産となっております。",
+    punch: "設計図の縮尺を間違えることが多く、完成した建物がいつも予定より少し小さくなりました。でも誰も気づいていません。"
+  },
+  {
+    name: "ムロマチ時代の茶人",
+    era: "室町時代 ・ 西暦1480年頃",
+    age: 8900, ageBar: 75,
+    rankLabel: "A", rankBar: 79,
+    lifeScore: "77%", lifeBar: 77,
+    reincarnation: 32, reincarnationBar: 53,
+    desc: "わびさびの心を体現した高名な茶人でございます。その茶会には大名や公家も列席し、一碗の茶に人生の真理を見出す御方でした。",
+    punch: "茶道の心得は完璧でしたが、肝心のお茶の味が薄すぎると毎回言われており、濃さだけがずっと課題でした。"
+  },
+  {
+    name: "清朝の皇帝の絵師",
+    era: "清の時代 ・ 西暦1750年頃",
+    age: 14200, ageBar: 81,
+    rankLabel: "A", rankBar: 86,
+    lifeScore: "67%", lifeBar: 67,
+    reincarnation: 39, reincarnationBar: 65,
+    desc: "清朝皇帝に仕えた宮廷絵師でございます。皇帝の肖像画から山水画まで、どんな注文にも応える万能の芸術家でありました。",
+    punch: "人物画は得意なのに動物だけは苦手で、皇帝の愛犬を描いたら「これはなんだ」と言われ5回描き直しました。"
+  },
+
+  // --- S ランク ---
+  {
+    name: "徳川家康の側近",
+    era: "江戸時代初期 ・ 西暦1610年頃",
+    age: 8600, ageBar: 75,
+    rankLabel: "S", rankBar: 92,
+    lifeScore: "73%", lifeBar: 73,
+    reincarnation: 34, reincarnationBar: 57,
+    desc: "天下を統一した徳川家康の側近として、政治の中枢に関わった御方でございます。歴史の大きな転換点を間近で見届けました。",
+    punch: "家康公の長寿の秘訣を間近で学んだのに、自分は早食いがやめられず、健康診断で毎回引っかかっておりました。"
+  },
+  {
+    name: "古代マヤの天文学者",
+    era: "古代マヤ文明 ・ 西暦800年頃",
+    age: 16500, ageBar: 86,
+    rankLabel: "S", rankBar: 91,
+    lifeScore: "62%", lifeBar: 62,
+    reincarnation: 53, reincarnationBar: 88,
+    desc: "星の動きを精密に観測し、永久に正確なカレンダーを作り上げたマヤの天文学者でございます。後世まで語り継がれる偉業でした。",
+    punch: "カレンダーを2012年で終わらせたのは「面倒になったから」という理由だったことが、最近の研究で明らかになりつつあります。"
+  },
+  {
+    name: "シバ女王の侍女長",
+    era: "古代エチオピア ・ 紀元前950年頃",
+    age: 29500, ageBar: 96,
+    rankLabel: "S", rankBar: 94,
+    lifeScore: "69%", lifeBar: 69,
+    reincarnation: 57, reincarnationBar: 92,
+    desc: "伝説の女王・シバに仕えた侍女長でございます。ソロモン王との会談にも同席した、歴史の目撃者でありました。",
+    punch: "ソロモン王との会談中、退屈のあまり居眠りしてしまい、女王に肘で起こされたことが侍女長の日記に残っております。"
+  },
+  {
+    name: "ヴェネツィアのゴンドラ職人",
+    era: "イタリア ・ 西暦1500年頃",
+    age: 12100, ageBar: 79,
+    rankLabel: "S", rankBar: 90,
+    lifeScore: "80%", lifeBar: 80,
+    reincarnation: 41, reincarnationBar: 68,
+    desc: "水の都ヴェネツィアでゴンドラを作り続けた名職人でございます。その技術は門外不出で、職人仲間から深く尊敬されておりました。",
+    punch: "作ったゴンドラは全て最高傑作でしたが、船酔いがひどくて自分では一度も乗れなかったそうです。"
+  },
+  {
+    name: "奈良の大仏の建立に携わった職人",
+    era: "奈良時代 ・ 西暦750年頃",
+    age: 13800, ageBar: 83,
+    rankLabel: "S", rankBar: 93,
+    lifeScore: "71%", lifeBar: 71,
+    reincarnation: 48, reincarnationBar: 80,
+    desc: "日本最大の大仏を作り上げた職人のひとりでございます。国家の威信をかけた大事業に参加した、誉れある御方でありました。",
+    punch: "担当した部分は大仏の左足の小指でございました。でも本人は「一番重要な部分」と言い張っておりました。"
+  },
+  {
+    name: "アレキサンダー大王の副官",
+    era: "古代マケドニア ・ 紀元前330年頃",
+    age: 23800, ageBar: 93,
+    rankLabel: "S", rankBar: 96,
+    lifeScore: "58%", lifeBar: 58,
+    reincarnation: 55, reincarnationBar: 91,
+    desc: "世界征服を目指したアレキサンダー大王のそばで戦った副官でございます。インドまで続く壮大な遠征を共に歩みました。",
+    punch: "大王の「ここは地の果てか？」という問いに毎回「まだあります」と答え続けた結果、インドまで行くことになりました。止められませんでした。"
+  },
+
+  // --- SS ランク ---
+  {
+    name: "クレオパトラの専属香水師",
+    era: "古代エジプト ・ 紀元前50年頃",
+    age: 20500, ageBar: 91,
+    rankLabel: "SS", rankBar: 97,
+    lifeScore: "75%", lifeBar: 75,
+    reincarnation: 62, reincarnationBar: 96,
+    desc: "世界一美しい女王・クレオパトラのそばで、毎日いい香りに包まれながら働いていた、羨ましすぎる職業の方でございます。",
+    punch: "ただ自分自身も香水をつけすぎる癖があり、廊下を歩くたびに気づいた人が窓を開けておりました。"
+  },
+  {
+    name: "始皇帝の不老不死研究員",
+    era: "秦の時代 ・ 紀元前220年頃",
+    age: 22300, ageBar: 92,
+    rankLabel: "SS", rankBar: 96,
+    lifeScore: "60%", lifeBar: 60,
+    reincarnation: 58, reincarnationBar: 93,
+    desc: "あの始皇帝に「不老不死の薬を作れ」と命じられた研究者でございます。国家予算をたっぷり使わせてもらいました。",
+    punch: "30年間研究した結果、「よく寝るのが一番」という結論に至りました。予算の使い道は謎のままです。"
+  },
+  {
+    name: "龍宮城の乙姫の侍女",
+    era: "神話の時代 ・ 年代不明",
+    age: 50000, ageBar: 99,
+    rankLabel: "SS", rankBar: 98,
+    lifeScore: "82%", lifeBar: 82,
+    reincarnation: 66, reincarnationBar: 97,
+    desc: "海の底の豪華なお城で、毎日ごちそうを食べながら働いていた、待遇だけ見ると最高の職場でございます。",
+    punch: "浦島太郎に玉手箱を渡したのはこの方です。「絶対開けないでね」と言ったのに開けられ、今でもちょっとモヤモヤしております。"
+  },
+  {
+    name: "ヴェルサイユ宮殿の庭園設計者",
+    era: "フランス ・ 西暦1680年頃",
+    age: 11200, ageBar: 85,
+    rankLabel: "SS", rankBar: 97,
+    lifeScore: "71%", lifeBar: 71,
+    reincarnation: 50, reincarnationBar: 83,
+    desc: "世界一有名な庭園を設計した天才でございます。左右対称の美しい幾何学模様は、ヨーロッパ中の庭園に影響を与えました。",
+    punch: "完成した瞬間に国王から「もう少し左にずらして」と言われ、そこから10年間「もう少し」が続きました。"
+  },
+  {
+    name: "チンギスハンの軍師",
+    era: "モンゴル帝国 ・ 西暦1210年頃",
+    age: 17800, ageBar: 88,
+    rankLabel: "SS", rankBar: 98,
+    lifeScore: "65%", lifeBar: 65,
+    reincarnation: 56, reincarnationBar: 92,
+    desc: "世界最大の帝国を作った大王の傍らで戦略を立て続けた、天才軍師でございます。その作戦は敵を打ち破り続けました。",
+    punch: "作戦は天才的でしたが地図が全く読めなかったため、移動の指示は常にチンギスハン本人が行っておりました。"
+  },
+  {
+    name: "ノアの方舟の動物係",
+    era: "神話の時代 ・ 年代不明",
+    age: 99000, ageBar: 100,
+    rankLabel: "SS", rankBar: 99,
+    lifeScore: "45%", lifeBar: 45,
+    reincarnation: 72, reincarnationBar: 99,
+    desc: "あの有名な大洪水を生き延びた方舟で、すべての動物の世話をした御方でございます。地球上の全動物の命を預かった責任重大な役割でした。",
+    punch: "動物の世話は完璧でしたが、自分が船酔いで40日間ずっとぐったりしておりました。ライオンに慰められたと伝わります。"
+  },
+
+  // --- SSS ランク ---
+  {
+    name: "ビッグバンの最初の光",
+    era: "宇宙誕生 ・ 138億年前",
+    age: 13800000000, ageBar: 100,
+    rankLabel: "SSS", rankBar: 100,
+    lifeScore: "100%", lifeBar: 100,
+    reincarnation: 99, reincarnationBar: 100,
+    desc: "宇宙が始まった瞬間に生まれた、文字通り宇宙で一番最初の存在でございます。138億年の歴史を持つ、格が違いすぎる魂です。",
+    punch: "138億年旅した末にたどり着いたのが、日当たりのいいお家のソファでした。なんか、正解な気がします。"
+  },
+  {
+    name: "天の川を作った神",
+    era: "宇宙創成期 ・ 100億年前",
+    age: 10000000000, ageBar: 100,
+    rankLabel: "SSS", rankBar: 100,
+    lifeScore: "97%", lifeBar: 97,
+    reincarnation: 98, reincarnationBar: 100,
+    desc: "夜空のあの美しい星の川を作った神様でございます。今も世界中の人が見上げて「きれいだね」と言ってくれています。",
+    punch: "ちょっと雑に作った部分があるのですが、暗くてよく見えないので誰も気づいていません。本人もどこか忘れました。"
+  },
+  {
+    name: "この宇宙の設計図を書いた神",
+    era: "宇宙誕生以前 ・ 時間の外",
+    age: 99999999999, ageBar: 100,
+    rankLabel: "SSS", rankBar: 100,
+    lifeScore: "99%", lifeBar: 99,
+    reincarnation: 99, reincarnationBar: 100,
+    desc: "物理法則も重力も光の速さも、全部この方が決めました。今ある宇宙のルールはすべてこの方のノートに書いてあります。",
+    punch: "ノートに消せないボールペンを使ったため、書き間違いがそのまま宇宙に反映されています。ブラックホールはそのひとつです。"
+  },
+  {
+    name: "月を地球の軌道に置いた存在",
+    era: "太陽系誕生 ・ 46億年前",
+    age: 4600000000, ageBar: 100,
+    rankLabel: "SSS", rankBar: 100,
+    lifeScore: "95%", lifeBar: 95,
+    reincarnation: 97, reincarnationBar: 100,
+    desc: "地球の美しい衛星・月をそっと軌道に配置した存在でございます。月のおかげで地球に潮の満ち引きが生まれ、生命が育ちました。",
+    punch: "「少しズレたかも」と思ったまま46億年が経ちました。今さら言えないので黙っております。"
+  },
+  {
+    name: "時間の概念そのもの",
+    era: "時間の始まり ・ 138億年前",
+    age: 13800000000, ageBar: 100,
+    rankLabel: "SSS", rankBar: 100,
+    lifeScore: "98%", lifeBar: 98,
+    reincarnation: 99, reincarnationBar: 100,
+    desc: "過去・現在・未来を管理する、宇宙で唯一無二の存在でございます。すべての生命と出来事はこの方のスケジュール帳に記されています。",
+    punch: "たまに止まることがあります。そういう日を人間は「時間が経つのを忘れた」と表現しますが、単に寝落ちしておりました。"
+  },
+
+  // ===== Aランク追加8種 =====
+  {
+    name: "江戸の人気落語家",
+    era: "江戸時代 ・ 西暦1830年頃",
+    age: 5100, ageBar: 51,
+    rankLabel: "A", rankBar: 76,
+    lifeScore: "83%", lifeBar: 83,
+    reincarnation: 20, reincarnationBar: 33,
+    desc: "江戸の寄席で大人気を誇った落語家でございます。高座に上がれば客席は爆笑の渦、引退後も語り継がれる名人でありました。",
+    punch: "高座では天才的なのに楽屋では一言もしゃべらなかったため、弟子たちは師匠が人間かどうか半信半疑でした。"
+  },
+  {
+    name: "お祭りの神輿の担ぎ手",
+    era: "江戸時代後期 ・ 西暦1850年頃",
+    age: 4800, ageBar: 48,
+    rankLabel: "A", rankBar: 74,
+    lifeScore: "90%", lifeBar: 90,
+    reincarnation: 13, reincarnationBar: 22,
+    desc: "地元のお祭りで神輿を担ぐ、町内でも有名な威勢のいい御方でございます。その掛け声は三丁目まで聞こえたと伝わります。",
+    punch: "掛け声だけは誰より大きかったのですが、実は全然担いでおらず、隣の人の肩に手を置いているだけでした。毎年バレていました。"
+  },
+  {
+    name: "平安時代の相撲取り",
+    era: "平安時代 ・ 西暦950年頃",
+    age: 9100, ageBar: 78,
+    rankLabel: "A", rankBar: 75,
+    lifeScore: "61%", lifeBar: 61,
+    reincarnation: 30, reincarnationBar: 50,
+    desc: "宮中の相撲節会に出場した力士でございます。貴族たちの前で力を披露する、誉れある役目を担った御方でありました。",
+    punch: "場所では負け続けましたが、試合前の塩まきだけは天下一品と評判で、塩まきを見るためだけに観客が来ておりました。"
+  },
+  {
+    name: "将軍お抱えの花火師",
+    era: "江戸時代 ・ 西暦1780年頃",
+    age: 5600, ageBar: 56,
+    rankLabel: "A", rankBar: 82,
+    lifeScore: "78%", lifeBar: 78,
+    reincarnation: 21, reincarnationBar: 35,
+    desc: "徳川将軍家お抱えの花火師として、江戸の夜空を彩り続けた職人でございます。その花火は見る者すべてを感動させました。",
+    punch: "毎回感動的な花火を打ち上げましたが、自分だけ毎回耳栓を忘れて翌日耳が遠くなっておりました。50年間同じ失敗でした。"
+  },
+  {
+    name: "京の都の染物職人",
+    era: "室町時代 ・ 西暦1460年頃",
+    age: 8700, ageBar: 72,
+    rankLabel: "A", rankBar: 79,
+    lifeScore: "74%", lifeBar: 74,
+    reincarnation: 27, reincarnationBar: 45,
+    desc: "京都で代々続く染物屋の名職人でございます。どんな色も自在に生み出す技術は都一番と称えられ、貴族からも注文が絶えませんでした。",
+    punch: "どんな色も出せる名人なのに、自分の服はいつも地味な茶色でした。「職人は目立ってはいけない」が口癖でしたが、単に面倒だったそうです。"
+  },
+  {
+    name: "江戸の人気猫絵師",
+    era: "江戸時代 ・ 西暦1810年頃",
+    age: 5300, ageBar: 53,
+    rankLabel: "A", rankBar: 77,
+    lifeScore: "87%", lifeBar: 87,
+    reincarnation: 18, reincarnationBar: 30,
+    desc: "江戸で大人気の絵師として、数多くの名作を世に残した御方でございます。その絵は飛ぶように売れ、版元も大喜びでありました。",
+    punch: "猫の絵だけは神がかっていましたが、他の絵を描くとなぜか全部猫に見えてしまうため、最終的に猫専門絵師として生きることにしました。"
+  },
+  {
+    name: "江戸のそば職人",
+    era: "江戸時代 ・ 西暦1790年頃",
+    age: 5000, ageBar: 50,
+    rankLabel: "A", rankBar: 73,
+    lifeScore: "81%", lifeBar: 81,
+    reincarnation: 17, reincarnationBar: 28,
+    desc: "江戸っ子に愛されたそば屋の職人でございます。毎朝打ちたてのそばを提供し、常連客で行列が絶えない人気店を切り盛りしておりました。",
+    punch: "そばは絶品でしたが、実は無類のうどん好きで、休日に他の店でうどんを食べているところを常連客に目撃され続けておりました。"
+  },
+  {
+    name: "長崎出島のオランダ通詞",
+    era: "江戸時代 ・ 西暦1760年頃",
+    age: 5800, ageBar: 58,
+    rankLabel: "A", rankBar: 80,
+    lifeScore: "69%", lifeBar: 69,
+    reincarnation: 23, reincarnationBar: 38,
+    desc: "鎖国の時代に唯一の窓口であった出島で、オランダ人と日本人の橋渡しをした通詞でございます。西洋の知識を日本に伝えた功労者でした。",
+    punch: "オランダ語は完璧に堪能でしたが、江戸弁が一生直らなかったため、オランダ人に「あなたの日本語はなぜそんなに勢いがあるのか」と毎回聞かれておりました。"
+  },
+
+  // ===== Bランク追加7種 =====
+  {
+    name: "忠臣蔵の討ち入り浪士",
+    era: "江戸時代 ・ 西暦1702年頃",
+    age: 6200, ageBar: 62,
+    rankLabel: "B", rankBar: 67,
+    lifeScore: "55%", lifeBar: 55,
+    reincarnation: 28, reincarnationBar: 47,
+    desc: "主君の仇討ちという大義のもと、命をかけて討ち入りに参加した浪士でございます。47人の武士の中のひとりとして歴史に名を刻みました。",
+    punch: "47人の中で一番道に迷いました。集合場所に30分遅刻しており、全員で待っておりました。"
+  },
+  {
+    name: "戦国時代の忍びの頭領",
+    era: "戦国時代 ・ 西暦1560年頃",
+    age: 7900, ageBar: 68,
+    rankLabel: "B", rankBar: 70,
+    lifeScore: "58%", lifeBar: 58,
+    reincarnation: 31, reincarnationBar: 52,
+    desc: "数十名の忍びを束ねた頭領として、戦国の世を陰で動かした御方でございます。その存在を知る者はほとんどおりませんでした。",
+    punch: "部下の忍者全員に自分の居場所がバレていました。「気配を消す訓練をもっとしてください」と毎回言われておりました。"
+  },
+  {
+    name: "幕末の志士",
+    era: "江戸時代末期 ・ 西暦1865年頃",
+    age: 4500, ageBar: 45,
+    rankLabel: "B", rankBar: 65,
+    lifeScore: "47%", lifeBar: 47,
+    reincarnation: 25, reincarnationBar: 42,
+    desc: "日本の夜明けを夢見て奔走した熱き志士でございます。その情熱と言葉は仲間たちの心に火をつけ、時代を動かす原動力となりました。",
+    punch: "熱い志はありましたが剣の腕より演説の方が圧倒的に強く、戦場より演説台に立っている時間の方が長かったそうです。"
+  },
+  {
+    name: "源平合戦の武将",
+    era: "平安時代末期 ・ 西暦1185年頃",
+    age: 10500, ageBar: 82,
+    rankLabel: "B", rankBar: 69,
+    lifeScore: "62%", lifeBar: 62,
+    reincarnation: 36, reincarnationBar: 60,
+    desc: "源平の合戦に参加した武将でございます。勇ましい鎧姿で戦場を駆け回り、その名は敵味方問わず広く知れ渡っておりました。",
+    punch: "鎧が似合いすぎたせいで、戦の依頼より絵師からの記念絵画の依頼の方が多くなっておりました。"
+  },
+  {
+    name: "江戸時代の剣豪",
+    era: "江戸時代 ・ 西暦1700年頃",
+    age: 6800, ageBar: 65,
+    rankLabel: "B", rankBar: 68,
+    lifeScore: "53%", lifeBar: 53,
+    reincarnation: 29, reincarnationBar: 48,
+    desc: "剣一筋に生きた剣豪でございます。真剣勝負において生涯無敗を誇り、その名は諸国に轟きました。弟子も数多く育てました。",
+    punch: "真剣勝負は無敗でしたが将棋では一度も勝てず、道場破りより将棋の対局を断ることの方が多かったそうです。"
+  },
+  {
+    name: "宮本武蔵の対戦相手",
+    era: "江戸時代初期 ・ 西暦1610年頃",
+    age: 7100, ageBar: 66,
+    rankLabel: "B", rankBar: 64,
+    lifeScore: "42%", lifeBar: 42,
+    reincarnation: 27, reincarnationBar: 45,
+    desc: "剣豪・宮本武蔵と真剣勝負を行った剣士でございます。天下無双の剣客と向き合ったその勇気は、後世まで語り継がれております。",
+    punch: "負けましたが「いい経験だった」と非常に前向きで、翌日から「武蔵と戦ったことある人」として近所で有名人になりました。"
+  },
+  {
+    name: "源義経の弓使い",
+    era: "平安時代末期 ・ 西暦1184年頃",
+    age: 10800, ageBar: 83,
+    rankLabel: "B", rankBar: 66,
+    lifeScore: "50%", lifeBar: 50,
+    reincarnation: 34, reincarnationBar: 57,
+    desc: "源義経に仕えた弓の名手でございます。屋島の戦いでも活躍し、その矢は遠く離れた的を正確に射抜いたと伝わります。",
+    punch: "弓の腕は一流でしたが、放つ方向が時々逆を向いていたため、味方からも距離を置かれておりました。"
+  },
+
+  // ===== Sランク追加6種 =====
+  {
+    name: "千利休の一番弟子",
+    era: "安土桃山時代 ・ 西暦1580年頃",
+    age: 9300, ageBar: 79,
+    rankLabel: "S", rankBar: 91,
+    lifeScore: "67%", lifeBar: 67,
+    reincarnation: 43, reincarnationBar: 72,
+    desc: "茶道の神様・千利休の一番弟子として、侘び寂びの心を極めた御方でございます。師匠から直々に茶の心を伝授された誇り高き存在でした。",
+    punch: "侘び寂びは完璧に極めましたが、お茶だけは毎回熱すぎて師匠に「もう少し冷ましなさい」と言われ続けた30年でした。"
+  },
+  {
+    name: "卑弥呼に仕えた巫女",
+    era: "弥生時代 ・ 西暦230年頃",
+    age: 18200, ageBar: 89,
+    rankLabel: "S", rankBar: 92,
+    lifeScore: "64%", lifeBar: 64,
+    reincarnation: 51, reincarnationBar: 85,
+    desc: "邪馬台国の女王・卑弥呼に仕えた巫女でございます。神と人との橋渡しをする神聖な役目を担い、国の重大事に関わり続けました。",
+    punch: "神託を民に伝える大切な役目でしたが、滑舌が壊滅的に悪く、毎回聞き返されておりました。神様も困っていたと思われます。"
+  },
+  {
+    name: "源頼朝の右腕",
+    era: "鎌倉時代 ・ 西暦1192年頃",
+    age: 11300, ageBar: 84,
+    rankLabel: "S", rankBar: 93,
+    lifeScore: "72%", lifeBar: 72,
+    reincarnation: 46, reincarnationBar: 77,
+    desc: "鎌倉幕府を開いた源頼朝の右腕として、武家政権の礎を築いた御方でございます。歴史の大転換を最前線で支えた立役者でありました。",
+    punch: "鎌倉幕府の立役者でしたが、本人は出世に全く興味がなく、できれば鎌倉の海で釣りをしていたかったと日記に記しております。"
+  },
+  {
+    name: "黒船に乗っていた水兵",
+    era: "江戸時代末期 ・ 西暦1853年頃",
+    age: 5000, ageBar: 50,
+    rankLabel: "S", rankBar: 90,
+    lifeScore: "56%", lifeBar: 56,
+    reincarnation: 38, reincarnationBar: 63,
+    desc: "ペリー提督率いる黒船艦隊の乗組員として、日本の歴史が大きく動いた瞬間に立ち会った御方でございます。",
+    punch: "歴史的な瞬間に居合わせましたが、その日は船のデッキ掃除当番でした。上陸もできず、甲板を磨きながら歴史が動くのを見ておりました。"
+  },
+  {
+    name: "紫式部のライバル歌人",
+    era: "平安時代 ・ 西暦1000年頃",
+    age: 9600, ageBar: 81,
+    rankLabel: "S", rankBar: 91,
+    lifeScore: "59%", lifeBar: 59,
+    reincarnation: 44, reincarnationBar: 73,
+    desc: "あの紫式部と同時代を生きた、実力互角と言われた歌人でございます。その和歌の才は宮中でも高く評価されておりました。",
+    punch: "実力は互角でしたが知名度で完敗したことを今でも根に持っており、転生するたびに「源氏物語は読んだことがない」と言い張っております。"
+  },
+  {
+    name: "織田信長の家臣筆頭",
+    era: "戦国時代 ・ 西暦1575年頃",
+    age: 8400, ageBar: 74,
+    rankLabel: "S", rankBar: 94,
+    lifeScore: "68%", lifeBar: 68,
+    reincarnation: 40, reincarnationBar: 67,
+    desc: "天下布武を目指した織田信長のそばで、家臣筆頭として仕えた御方でございます。信長の絶大な信頼を受け、数々の戦で活躍しました。",
+    punch: "家臣筆頭の重責を担いながら、信長の靴下を毎朝選ぶ役割も兼任しておりました。「今日は何色ですか」が一日の始まりでした。"
+  },
+];
+
+let capturedImageData = null;
+
+// ===== 画面遷移 =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goToTop() {
+  showScreen('screen-top');
+}
+
+function goToCamera() {
+  capturedImageData = null;
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('upload-area').style.display = 'block';
+  document.getElementById('btn-diagnose').style.display = 'none';
+  showScreen('screen-camera');
+}
+
+// ===== 写真アップロード =====
+function uploadPhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    capturedImageData = e.target.result;
+    // プレビュー表示
+    document.getElementById('preview-img').src = capturedImageData;
+    document.getElementById('preview-wrap').style.display = 'block';
+    document.getElementById('upload-area').style.display = 'none';
+    document.getElementById('btn-diagnose').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== ローディング演出 =====
+function startLoading() {
+  if (!capturedImageData) return;
+  showScreen('screen-loading');
+  document.getElementById('loading-img').src = capturedImageData;
+
+  const steps = ['step-1','step-2','step-3','step-4','step-5'];
+  steps.forEach(s => {
+    const el = document.getElementById(s);
+    el.classList.remove('done', 'active');
+  });
+
+  // 年数カウントアップ
+  let count = 0;
+  const target = Math.floor(Math.random() * 30000) + 5000;
+  const countEl = document.getElementById('years-count');
+  const countInterval = setInterval(() => {
+    count += Math.floor(target / 40);
+    if (count >= target) { count = target; clearInterval(countInterval); }
+    countEl.textContent = count.toLocaleString();
+  }, 60);
+
+  // ステップアニメーション
+  const delays = [300, 1200, 2400, 3800, 5500];
+  steps.forEach((s, i) => {
+    setTimeout(() => {
+      if (i > 0) document.getElementById(steps[i-1]).classList.remove('active');
+      if (i > 0) document.getElementById(steps[i-1]).classList.add('done');
+      document.getElementById(s).classList.add('active');
+    }, delays[i]);
+  });
+
+  setTimeout(() => {
+    document.getElementById('step-5').classList.remove('active');
+    document.getElementById('step-5').classList.add('done');
+    showResult();
+  }, 7000);
+}
+
+// ===== 結果表示 =====
+function showResult() {
+  const data = ZENSE_DATA[Math.floor(Math.random() * ZENSE_DATA.length)];
+  
+  document.getElementById('result-img').src = capturedImageData;
+  document.getElementById('result-name').textContent = data.name;
+  document.getElementById('result-era').textContent = data.era;
+  document.getElementById('result-desc').textContent = data.desc;
+  document.getElementById('result-punch').textContent = data.punch;
+
+  // 魂年齢の表示（大きい数字は単位変換）
+  let ageText;
+  if (data.age >= 1000000000) ageText = Math.floor(data.age/100000000)/10 + '億年';
+  else if (data.age >= 10000000) ageText = Math.floor(data.age/1000000) + '百万年';
+  else if (data.age >= 10000) ageText = Math.floor(data.age/10000) + '万年';
+  else ageText = data.age.toLocaleString() + '年';
+
+  document.getElementById('val-age').textContent = ageText;
+  document.getElementById('val-rank').innerHTML = `<span class="rank-badge rank-${data.rankLabel}">${data.rankLabel}</span>`;
+  document.getElementById('val-life').textContent = data.lifeScore;
+  document.getElementById('val-reincarnation').textContent = data.reincarnation + '回';
+
+  showScreen('screen-result');
+
+  // バーアニメーション
+  setTimeout(() => {
+    document.getElementById('bar-age').style.width = data.ageBar + '%';
+    document.getElementById('bar-rank').style.width = data.rankBar + '%';
+    document.getElementById('bar-life').style.width = data.lifeBar + '%';
+    document.getElementById('bar-reincarnation').style.width = data.reincarnationBar + '%';
+  }, 200);
+
+  // SSS演出：キラキラ降らせる
+  if (data.rankLabel === 'SSS') {
+    setTimeout(() => triggerSSSEffect(), 400);
+  }
+}
+
+function triggerSSSEffect() {
+  const overlay = document.getElementById('sss-overlay');
+  overlay.classList.add('show');
+  const emojis = ['✨','⭐','🌟','💫','🌠','✦'];
+  for (let i = 0; i < 40; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'star-particle';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.animationDuration = (2 + Math.random() * 3) + 's';
+      el.style.animationDelay = '0s';
+      el.style.fontSize = (14 + Math.random() * 20) + 'px';
+      overlay.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }, i * 80);
+  }
+  setTimeout(() => overlay.classList.remove('show'), 6000);
+}
+</script>
+
+</body>
+</html>
