@@ -1910,17 +1910,25 @@ function showResult() {
 
   showScreen('screen-result');
 
-  // バーアニメーション
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      setTimeout(() => {
-        document.getElementById('bar-age').style.width = data.ageBar + '%';
-        document.getElementById('bar-rank').style.width = data.rankBar + '%';
-        document.getElementById('bar-life').style.width = data.lifeBar + '%';
-        document.getElementById('bar-reincarnation').style.width = data.reincarnationBar + '%';
-      }, 100);
-    });
+  // バーアニメーション（iOS対応）
+  var barTargets = [
+    ['bar-age', data.ageBar],
+    ['bar-rank', data.rankBar],
+    ['bar-life', data.lifeBar],
+    ['bar-reincarnation', data.reincarnationBar]
+  ];
+  barTargets.forEach(function(item) {
+    var el = document.getElementById(item[0]);
+    el.style.transition = 'none';
+    el.style.width = '0%';
   });
+  setTimeout(function() {
+    barTargets.forEach(function(item) {
+      var el = document.getElementById(item[0]);
+      el.style.transition = 'width 1.5s ease-out';
+      el.style.width = item[1] + '%';
+    });
+  }, 300);
 
   // SSS演出：キラキラ降らせる
   if (data.rankLabel === 'SSS') {
