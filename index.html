@@ -1911,12 +1911,16 @@ function showResult() {
   showScreen('screen-result');
 
   // バーアニメーション
-  setTimeout(() => {
-    document.getElementById('bar-age').style.width = data.ageBar + '%';
-    document.getElementById('bar-rank').style.width = data.rankBar + '%';
-    document.getElementById('bar-life').style.width = data.lifeBar + '%';
-    document.getElementById('bar-reincarnation').style.width = data.reincarnationBar + '%';
-  }, 200);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      setTimeout(() => {
+        document.getElementById('bar-age').style.width = data.ageBar + '%';
+        document.getElementById('bar-rank').style.width = data.rankBar + '%';
+        document.getElementById('bar-life').style.width = data.lifeBar + '%';
+        document.getElementById('bar-reincarnation').style.width = data.reincarnationBar + '%';
+      }, 100);
+    });
+  });
 
   // SSS演出：キラキラ降らせる
   if (data.rankLabel === 'SSS') {
